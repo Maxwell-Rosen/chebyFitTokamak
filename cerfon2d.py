@@ -131,7 +131,14 @@ R = np.zeros(12)
 for i in range(0,len(expressions)):
     R[i] = - get_constant_coeff(expressions[i])
 
+#Calculate the coeffieicients c which are used to evaluate psi
 c = lin.inv(L).dot(R)
+
+
+###
+
+
+###
 
 print(psi(x,y))
 
@@ -210,7 +217,7 @@ def jacx(x,yf,psif):
 # plt.ylim(-1.2,1.2)
 # plt.show()
 
-load = False
+load = True
 #R0 =  1.1
 # Try karge R0 for iter
 #R0 = 6.2

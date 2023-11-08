@@ -4,6 +4,7 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import sympy as sm
 import numpy.linalg as lin
+import chebyFitFuncs as chb
 
 
 x = sm.symbols("x")

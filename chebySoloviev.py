@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import ChebyFitFuncs as chb
+import chebyFitFuncs as chb
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,7 +24,7 @@ R2 = np.sqrt(ri**2 + re**2 - R1**2)
 Z2 = np.sqrt((zt**2 * R2**2)/(R2**2 + R1**2 - 2*rt**2))
 n = 5 #order of chebyshev representation
 
-coeffs = chb.cheby2coeff(R1,R2,-Z2,Z2,n,Soloviev)
+coeffs = chb.coeff2D(R1,R2,-Z2,Z2,n,Soloviev)
 coeffs[abs(coeffs)<1e-10]=0
 
 rvals = np.linspace(R1,R2,100)
@@ -33,7 +33,7 @@ gridPTS = np.meshgrid(rvals,zvals)
 solnGrid = np.zeros([len(rvals),len(zvals)])
 for ir in range(len(rvals)):
     for iz in range(len(zvals)):
-        solnGrid[ir,iz] = chb.cheby2ft(R1, R2, -Z2, Z2, n, coeffs, gridPTS[0][ir,iz], gridPTS[1][ir,iz])
+        solnGrid[ir,iz] = chb.fit2D(R1, R2, -Z2, Z2, n, coeffs, gridPTS[0][ir,iz], gridPTS[1][ir,iz])
         
 solnGrid[solnGrid<0]=-.01
 plt.contourf(rvals,zvals,solnGrid,10, cmap='Purples')

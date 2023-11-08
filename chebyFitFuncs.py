@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-''' This code contains all the functions used for chebychev polynomial fitting. Provided that there is an analytical function as the input, these functions will find the chebychev polynomial representation for that function.
+""" This code contains all the functions used for chebychev polynomial fitting. Provided that there is an analytical function as the input, these functions will find the chebychev polynomial representation for that function."""
 
-'''
 import numpy as np
 
-def chebycoeff(a,b,n,func):
-    ''' a - The lower bound of the interval \n
+def coeff(a,b,n,func):
+    r''' a - The lower bound of the interval \n
     b - The upper bound of the interval \n
     n - The order of the polynomial approximation \n
     func - The function being approximated
@@ -29,7 +28,7 @@ def chebycoeff(a,b,n,func):
     c[0]/=2 # Due to the orthogonal product
     return c
 
-def chebyft(a,b,n,c,x):
+def fit(a,b,n,c,x):
     '''a - The lower bound of the interval \n
     b - The upper bound of the interval\n
     n - The order of the polynomial approximation \n
@@ -48,7 +47,7 @@ def chebyft(a,b,n,c,x):
     val = xtrans*d[1]-d[2]+c[0]
     return val
 
-def chebycoeffder(a,b,n,c):
+def coeffDer(a,b,n,c):
     ''' a - lower bound \n
     b - upper bound \n
     n - order of approximation \n 
@@ -64,7 +63,7 @@ def chebycoeffder(a,b,n,c):
     cder = cder*2/(b-a)
     return cder
     
-def chebycoeffint(a,b,n,c):
+def coeffInt(a,b,n,c):
     ''' a - lower bound \n
     b - upper bound \n
     n - order of approximation \n
@@ -85,8 +84,8 @@ def chebycoeffint(a,b,n,c):
     Sum+= fac*cint[n-1]
     cint[0]=Sum
     return cint
-    
-def cheby2coeff(a,b,c,d,n,func):
+
+def coeff2D(a,b,c,d,n,func):
     '''a - x lower bound \n
     b - x upper bound \n
     c - y lower bound \n
@@ -125,7 +124,7 @@ def cheby2coeff(a,b,c,d,n,func):
             cij[iterm,jterm] = fac*Sum
     return cij
 
-def cheby2ft(a,b,c,d,n,cij,x,y):
+def fit2D(a,b,c,d,n,cij,x,y):
     '''a - x lower bound \n
     b - x upper bound \n
     c - y lower bound \n
@@ -142,43 +141,41 @@ def cheby2ft(a,b,c,d,n,cij,x,y):
         raise Exception('y is outside the range of routine cheby2ft')
     g = np.zeros(n)
     for i in range(n):
-        g[i] = chebyft(c,d,n,cij[i,:],y)
-    val = chebyft(a,b,n,g,x)
+        g[i] = fit(c,d,n,cij[i,:],y)
+    val = fit(a,b,n,g,x)
     return val
-    
-def cheby2coeffpartial_x(a,b,c,d,n,func):
+
+def coeffPartialX(a,b,c,d,n,cij):
     '''a - x lower bound \n
     b - x upper bound \n
     c - y lower bound \n
     d - y upper bound \n
     n - order of approximation \n
-    func - the function which to approximate \n
+    cij - the chebychev coefficients \n
     returns\n
     dx_cij - the chebychev coefficients derivative wrt x
     '''
-    cij = cheby2coeff(a,b,c,d,n,func)
     dxcij = np.zeros(np.shape(cij))
     for i in range(n):
-        dxcij[:,i]=chebycoeffder(a,b,n,cij[:,i])
+        dxcij[:,i]=coeffDer(a,b,n,cij[:,i])
     return dxcij
 
-def cheby2coeffpartial_y(a,b,c,d,n,func):
+def coeffPartialY(a,b,c,d,n,cij):
     '''a - x lower bound \n
     b - x upper bound \n
     c - y lower bound \n
     d - y upper bound \n
     n - order of approximation \n
-    func - the function which to approximate \n
+    cij - the chebychev coefficients \n
     returns\n
     dy_cij - the chebychev coefficients derivative wrt y
     '''
-    cij = cheby2coeff(a,b,c,d,n,func)
     dycij = np.zeros(np.shape(cij))
     for i in range(n):
-        dycij[i,:]=chebycoeffder(c,d,n,cij[i,:])
+        dycij[i,:]=coeffDer(c,d,n,cij[i,:])
     return dycij
 
-def cheby2coeffpartial_xy(a,b,c,d,n,func):
+def coeffPartialXY(a,b,c,d,n,cij):
     '''a - x lower bound \n
     b - x upper bound \n
     c - y lower bound \n
@@ -188,13 +185,12 @@ def cheby2coeffpartial_xy(a,b,c,d,n,func):
     returns\n
     dxdy_cij - the chebychev coefficients derivative wrt x and y
     '''
-    cij = cheby2coeff(a,b,c,d,n,func)
     dycij = np.zeros(np.shape(cij))
     for i in range(n):
-        dycij[i,:]=chebycoeffder(c,d,n,cij[i,:])
+        dycij[i,:]=coeffDer(c,d,n,cij[i,:])
     dydxcij = np.zeros(np.shape(cij))
     for i in range(n):
-        dydxcij[:,i]=chebycoeffder(a,b,n,dycij[:,i])
+        dydxcij[:,i]=coeffDer(a,b,n,dycij[:,i])
     return dydxcij
 
 
