@@ -3,6 +3,7 @@ import scipy as sc
 import matplotlib.pyplot as plt
 import sympy as sm
 import numpy.linalg as lin
+import chebyFitFuncs as chb
 
 
 x = sm.symbols('x')
@@ -217,67 +218,70 @@ def jacx(x,yf,psif):
 # plt.ylim(-1.2,1.2)
 # plt.show()
 
-load = True
-#R0 =  1.1
-# Try karge R0 for iter
-#R0 = 6.2
-R0 = 1.0
 
-xgrid = R0*np.arange(0,1.5,.005)
-#ygrid = R0*np.arange(-1.2,1.2,0.005)
-ygrid = R0*np.arange(-1.5,1.5,0.005)
-X,Y = np.meshgrid(xgrid,ygrid)
+
+#region Chebyshev decomposition
+
+##My work begins here. Put in a chebyshev decomposition for psi.
+xMin, xMax = 0, 2.5
+yMin, yMax = -3.5, 3.5
+R0 = 1.0
+cheby_order = 10
+coeff = chb.coeff2D(xMin/R0,xMax/R0,yMin/R0,yMax/R0,cheby_order,psi)
+
+#endregion
+
+
+
+load = False
+
+xgrid = R0 * np.arange(xMin, xMax, 0.05)
+ygrid = R0 * np.arange(yMin, yMax, 0.05)
+X, Y = np.meshgrid(xgrid, ygrid)
 
 if load:
-    psiplot = np.load('./psiplot.npy')
+    psiplot = np.load("./psiplot.npy")
+    psiplot_cheby = np.load("./psiplot_cheby.npy")
 else:
-    psiplot = np.zeros((xgrid.shape[0],ygrid.shape[0]))
-    for i in range(0,xgrid.shape[0]):
-       for j in range(0,ygrid.shape[0]):
-           psiplot[i,j] = float(psi(xgrid[i]/R0,ygrid[j]/R0))
-    np.save('psiplot',psiplot)
+    psiplot = np.zeros((xgrid.shape[0], ygrid.shape[0]))
+    for i in range(0, xgrid.shape[0]):
+        for j in range(0, ygrid.shape[0]):
+            psiplot[i, j] = float(psi(xgrid[i] / R0, ygrid[j] / R0))
+    np.save("psiplot", psiplot)
 
-fig, ax = plt.subplots()
-CS = ax.contour(X, Y, psiplot.T, levels =  np.arange(0.00,0.005,0.001))
-ax.clabel(CS, inline=True, fontsize=10)
+    psiplot_cheby = np.zeros((xgrid.shape[0], ygrid.shape[0]))
+    for i in range(0, xgrid.shape[0]):
+        for j in range(0, ygrid.shape[0]):
+            psiplot_cheby[i, j] = chb.fit2D(xMin/R0,xMax/R0\
+                    ,yMin/R0,yMax/R0, cheby_order,coeff,xgrid[i]/R0,ygrid[j]/R0)
+    np.save("psiplot_cheby", psiplot_cheby)
 
-psifs = np.arange(0.00,0.005,0.001)
-candidates = np.zeros((len(psifs),200,2))
-maxes = np.zeros((len(psifs),2))
-for  ipsi, psif in enumerate(psifs):
-    for i,xf in enumerate(np.linspace(R0*0.75,R0*0.95,num=200)):
-        #out = least_squares(func,x0=R0*0.5,jac = jac, bounds = (R0*0.5,R0*0.8), args = (xf,psif))
-        out = least_squares(func,x0=R0*0.5,jac = jac, bounds = (R0*0.5,R0*0.8), args = (xf,psif))
-        candidates[ipsi,i] = np.r_[xf,out.x]
-    maxind = np.argmax(candidates[ipsi,:,1])
-    maxes[ipsi] = candidates[ipsi,maxind,:]
-Rlist = maxes[:,0]
-Zlist = maxes[:,1]
-plt.scatter(Rlist,Zlist)
-plt.show()
-def Rt(psifs):
-    return (Rlist[-1] - Rlist[0])/(psifs[-1]-psifs[0])*psifs + Rlist[0]
-def Zt(psi):
-    return (Zlist[-1] - Zlist[0])/(psifs[-1]-psifs[0])*psifs + Zlist[0]
+print("Plotting...\n")
+fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+# Plot psiplot.T on the left panel
+CS1 = axs[0].contour(X, Y, psiplot.T, levels=np.arange(-0.001 * 10, 0.002 * 10, 0.001))
+axs[0].clabel(CS1, inline=True, fontsize=10)
+axs[0].set_xlabel("$R/R_0$")
+axs[0].set_ylabel("$Z/R_0$")
+axs[0].set_title("psi")
 
-plt.figure()
-plt.plot(psifs,Rlist, label='R')
-plt.plot(psifs,Zlist, label='Z')
-plt.plot(psifs,Rt(psifs), label='Rt')
-plt.plot(psifs,Zt(psifs), label='Zt')
-plt.legend()
+# Plot psiplot_cheby.T on the middle panel
+CS2 = axs[1].contour(X, Y, psiplot_cheby.T, levels=np.arange(-0.001 * 10, 0.002 * 10, 0.001))
+axs[1].clabel(CS2, inline=True, fontsize=10)
+axs[1].set_xlabel("$R/R_0$")
+axs[1].set_ylabel("$Z/R_0$")
+axs[1].set_title("Chebyshev representation")
 
+# Plot the difference between psiplot.T and psiplot_cheby.T on the right panel
+diff = (psiplot - psiplot_cheby)/psiplot
+CS3 = axs[2].imshow(np.log(np.abs(diff.T)), origin='lower', extent=[xMin, xMax, yMin, yMax])
+#include colorbar
+cbar = fig.colorbar(CS3)
+cbar.set_label("Log Fractional Difference")
+axs[2].set_xlabel("$R/R_0$")
+axs[2].set_ylabel("$Z/R_0$")
+axs[2].set_title("Log Fractional Difference")
 
-
-import scipy.optimize as sco
-psifs+=0.001 # for consistency with data from gkyl below
-theta_cut = np.array([-0.19718586425263, -0.2017182175816, -0.20289153668105, -0.20194843728835, -0.19901352511069])
-theta_cut = np.array([-0.196161256209,-0.19959362261472,-0.2022156986449,-0.20116440940705,-0.19809244036002])
-def theta_func(psif,a,b,c):
-    return a*psif + b*psif**2 + c
-popt,pcov = sco.curve_fit(theta_func, psifs, theta_cut)
-plt.figure()
-plt.plot(psifs,theta_func(psifs, *popt), label = 'fit')
-plt.plot(psifs, theta_cut, label = 'theta')
-plt.legend()
+fig.colorbar(CS1, ax=axs.ravel().tolist())
+plt.savefig('figures/cerfon2d_cheby.png')
 plt.show()

@@ -1,12 +1,10 @@
 import numpy as np
-from scipy.optimize import least_squares
-from scipy.optimize import fsolve
+import scipy as sc
 import matplotlib.pyplot as plt
 import sympy as sm
 import numpy.linalg as lin
 import chebyFitFuncs as chb
 
-#region Equilibrium
 x = sm.symbols("x")
 y = sm.symbols("y")
 c1 = sm.symbols("c1")
@@ -16,7 +14,13 @@ c4 = sm.symbols("c4")
 c5 = sm.symbols("c5")
 c6 = sm.symbols("c6")
 c7 = sm.symbols("c7")
-c = np.r_[c1, c2, c3, c4, c5, c6, c7]
+c8 = sm.symbols("c8")
+c9 = sm.symbols("c9")
+c10 = sm.symbols("c10")
+c11 = sm.symbols("c11")
+c12 = sm.symbols("c12")
+
+c = np.r_[c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12]
 
 
 # Equation 8 is psi through psi7
@@ -31,8 +35,12 @@ def psi(x, y):
         + c[4] * psi5(x, y)
         + c[5] * psi6(x, y)
         + c[6] * psi7(x, y)
+        + c[7] * psi8(x, y)
+        + c[8] * psi9(x, y)
+        + c[9] * psi10(x, y)
+        + c[10] * psi11(x, y)
+        + c[11] * psi12(x, y)
     )
-
 
 def psi1(x, y):
     return 1
@@ -67,6 +75,26 @@ def psi7(x, y):
         - 120 * x**2 * y**4 * sm.log(x)
     )
 
+def psi8(x, y):
+    return y
+
+def psi9(x, y):
+    return y * x**2
+
+def psi10(x, y):
+    return y**3 - 3 * y * x**2 * sm.log(x)
+
+def psi11(x, y):
+    return 3 * y * x**4 - 4 * y**3 * x**2
+
+def psi12(x, y):
+    return (
+        8 * y**5
+        - 45 * y * x**4
+        - 80 * y**3 * x**2 * sm.log(x)
+        + 60 * y * x**4 * sm.log(x)
+    )
+
 def psi_x(x0, y0):
     deriv = sm.diff(psi(x, y), x)
     return deriv.subs(x, x0).subs(y, y0)
@@ -83,15 +111,16 @@ def psi_yy(x0, y0):
     deriv = sm.diff(sm.diff(psi(x, y), y), y)
     return deriv.subs(x, x0).subs(y, y0)
 
-# NSTX Params
-epsilon = 0.78
-kappa = 2.0
-delta = 0.35
+# Iter Params
+epsilon = 0.32
+kappa = 1.7
+delta = 0.33
 alpha = np.arcsin(delta)
-x_sep = 1 - 1.1 * delta * epsilon
-y_sep = 1.1 * kappa * epsilon
-q_star = 2.0
-A = 0.0
+x_sep = 0.88
+y_sep = -0.60
+q_star = 1.57
+A = -0.155  # choose A corresponding  to beta = 0.05
+
 
 N1 = -((1 + alpha) ** 2) / (epsilon * kappa**2)
 N2 = (1 - alpha) ** 2 / (epsilon * kappa**2)
@@ -100,53 +129,75 @@ N3 = -kappa / (epsilon * np.cos(alpha) ** 2)
 
 def get_constant_coeff(expr):
     """Helper function for getting constant coefficient"""
-    return expr.as_independent(c1, c2, c3, c4, c5, c6, c7)[0]
+    return expr.as_independent(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)[0]
 
 
 # Boundary Equations. Equation 10
-expressions = np.zeros(7, dtype=object)
+expressions = np.zeros(12, dtype=object)
 expressions[0] = psi(1 + epsilon, 0)
 expressions[1] = psi(1 - epsilon, 0)
-expressions[2] = psi(x_sep, y_sep)
-expressions[3] = psi_x(x_sep, y_sep)
-expressions[4] = psi_y(x_sep, y_sep)
-expressions[5] = psi_yy(1 + epsilon, 0) + N1 * psi_x(1 + epsilon, 0)
-expressions[6] = psi_yy(1 - epsilon, 0) + N2 * psi_x(1 - epsilon, 0)
+expressions[2] = psi(1 - delta * epsilon, kappa * epsilon)
+expressions[3] = psi(x_sep, y_sep)
+expressions[4] = psi_y(1 + epsilon, 0)
+expressions[5] = psi_y(1 - epsilon, 0)
+expressions[6] = psi_x(1 - delta * epsilon, kappa * epsilon)
+expressions[7] = psi_x(x_sep, y_sep)
+expressions[8] = psi_y(x_sep, y_sep)
+expressions[9] = psi_yy(1 + epsilon, 0) + N1 * psi_x(1 + epsilon, 0)
+expressions[10] = psi_yy(1 - epsilon, 0) + N2 * psi_x(1 - epsilon, 0)
+expressions[11] = psi_xx(1 - delta * epsilon, kappa * epsilon) + N3 * psi_y(
+    1 - delta * epsilon, kappa * epsilon
+)
 
 # Lefthand side Matrix to multiply column vector c
-L = np.zeros((7, 7))
+L = np.zeros((12, 12))
 for i in range(0, len(expressions)):
     for j in range(0, len(c)):
         L[i, j] = expressions[i].coeff(c[j])
 
 # Righthand side values
-R = np.zeros(7)
+R = np.zeros(12)
 for i in range(0, len(expressions)):
     R[i] = -get_constant_coeff(expressions[i])
 
 c = lin.inv(L).dot(R)
 
 print(psi(x, y))
-#endregion
 
-#region Inverse solver target functions
+# psival = sm.symbols('psival')
+# expr = 5 - psi(x,y)
+# solution = sm.solve(expr,y)
+
+# eqn = sm.Eq(psi(x,y),0.1)
+# solutions = sm.solve(eqn, y, implicit=True,dict=True)
+# sol = solutions[0][y]
+
+from scipy.optimize import least_squares
+from scipy.optimize import fsolve
+
+
 # Solve for y given x
 def func(y, xf, psif):
+    # print(xf,psif)
     return psif - float(psi(xf, y[0]))
 
 
 def jac(y, xf, psif):
+    # print('x and y', xf, y)
+    # print(psi_y(xf,y[0]))
     return float(-psi_y(xf, y[0]))
 
 
 # Solve for x given y
 def funcx(x, yf, psif):
+    # print(xf,psif)
     return psif - float(psi(x[0], yf))
 
 
 def jacx(x, yf, psif):
+    # print('x and y', xf, y)
+    # print(psi_y(xf,y[0]))
     return float(-psi_x(x[0], yf))
-#endregion
 
 #region Chebyshev decomposition
 
@@ -159,9 +210,54 @@ coeff = chb.coeff2D(xMin/R0,xMax/R0,yMin/R0,yMax/R0,cheby_order,psi)
 
 #endregion
 
-
+# psif = 0.002
+#
+# postable = np.zeros((110,4))
+# for i in range(0,110):
+#     xf = 0.4+0.01*i
+#     out = least_squares(func,x0=0.1,jac = jac, bounds = (0,np.inf), args = (xf,psif))
+#     yf  = out.x[0]
+#     postable[i,:] =np.r_[xf,yf, out.cost,out.status]
+#     #print(i, out.cost, out.status)
+# possoltable = postable[postable[:,2]<1e-8]
+# xpossol = possoltable[:,0]
+# ypossol = possoltable[:,1]
+#
+# midtable = np.zeros((110,4))
+# for i in range(0,110):
+#     xf = 0.4+0.01*i
+#     out = least_squares(func,x0=-0.2,jac = jac, bounds = (-0.6,0), args = (xf,psif))
+#     yf  = out.x[0]
+#     midtable[i,:] =np.r_[xf,yf, out.cost,out.status]
+#     #print(i, out.cost, out.status)
+# midsoltable = midtable[midtable[:,2]<1e-8]
+# xmidsol = midsoltable[:,0]
+# ymidsol = midsoltable[:,1]
+#
+#
+#
+# negtable = np.zeros((110,4))
+# for i in range(0,110):
+#     xf = 0.4+0.01*i
+#     out = least_squares(func,x0=-0.8,jac = jac, bounds = (-np.inf,-0.6), args = (xf,psif))
+#     yf  = out.x[0]
+#     negtable[i,:] =np.r_[xf,yf, out.cost,out.status]
+#     #print(i, out.cost, out.status)
+# negsoltable = negtable[negtable[:,2]<1e-8]
+# xnegsol = negsoltable[:,0]
+# ynegsol = negsoltable[:,1]
+#
+# plt.scatter(xpossol,ypossol)
+# plt.scatter(xnegsol,ynegsol)
+# plt.scatter(xmidsol,ymidsol)
+# plt.xlim(0,2.5)
+# plt.ylim(-1.2,1.2)
+# plt.show()
 
 load = False
+# R0 =  1.1
+# Try karge R0 for iter
+# R0 = 6.2
 
 xgrid = R0 * np.arange(xMin, xMax, 0.05)
 ygrid = R0 * np.arange(yMin, yMax, 0.05)
@@ -211,5 +307,5 @@ axs[2].set_ylabel("$Z/R_0$")
 axs[2].set_title("Log Fractional Difference")
 
 fig.colorbar(CS1, ax=axs.ravel().tolist())
-plt.savefig('figures/cerfon_symmertric_cheby.png')
+plt.savefig('figures/cerfon_cheby.png')
 plt.show()

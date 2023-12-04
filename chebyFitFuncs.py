@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-""" This code contains all the functions used for chebychev polynomial fitting. Provided that there is an analytical function as the input, these functions will find the chebychev polynomial representation for that function."""
+""" This code contains all the functions used for chebychev polynomial fitting. 
+Provided that there is an analytical function as the input, these functions will 
+find the chebychev polynomial representation for that function."""
 
 import numpy as np
 
@@ -29,12 +31,17 @@ def coeff(a,b,n,func):
     return c
 
 def fit(a,b,n,c,x):
-    '''a - The lower bound of the interval \n
-    b - The upper bound of the interval\n
-    n - The order of the polynomial approximation \n
-    c - The chebyshev coefficients \n
-    x - A point at which the chebyshev oolynomial is evaluated at. I'm not sure if this is exactly what we want out of this code. Wouldn't we rather have the function itself for rapid evaluation for any x? Also, I chose to code in a C friendly way, avoiding vectorized computations where you could input an array of x-values and it would spit out the array of y values. This might be more straightfoward to implement in CUDA since it is C based. \n
-    returns \n
+    '''a - The lower bound of the interval 
+    b - The upper bound of the interval
+    n - The order of the polynomial approximation 
+    c - The chebyshev coefficients 
+    x - A point at which the chebyshev oolynomial is evaluated at. 
+    I'm not sure if this is exactly what we want out of this code. 
+    Wouldn't we rather have the function itself for rapid evaluation for any x? 
+    Also, I chose to code in a C friendly way, avoiding vectorized computations 
+    where you could input an array of x-values and it would spit out the array of y values. 
+    This might be more straightfoward to implement in CUDA since it is C based. 
+    returns 
     val - The value of the chebychev approximation at the point x'''
     if (x-a)*(x-b)>0:
         raise Exception('x is outside the range of routine chebyft')
@@ -48,11 +55,11 @@ def fit(a,b,n,c,x):
     return val
 
 def coeffDer(a,b,n,c):
-    ''' a - lower bound \n
-    b - upper bound \n
-    n - order of approximation \n 
-    c - the chebychev coeffieicents for the fit \n
-    returns \n
+    ''' a - lower bound 
+    b - upper bound 
+    n - order of approximation 
+    c - the chebychev coeffieicents for the fit 
+    returns 
     cder - the coefficients for the derivative of the chebyshev approximation'''
     cder = np.zeros(n)
     cder[n-2] = 2*(n-1)*c[n-1]
@@ -64,11 +71,11 @@ def coeffDer(a,b,n,c):
     return cder
     
 def coeffInt(a,b,n,c):
-    ''' a - lower bound \n
-    b - upper bound \n
-    n - order of approximation \n
-    c - the chebychev coefficients for the fit \n
-    returns \n
+    ''' a - lower bound 
+    b - upper bound 
+    n - order of approximation 
+    c - the chebychev coefficients for the fit 
+    returns 
     cint - the constants for a chebyshev fit for the integral of the function '''
     con = 0.25*(b-a)
     loopvals = np.arange(1,n-1,1)
@@ -86,13 +93,13 @@ def coeffInt(a,b,n,c):
     return cint
 
 def coeff2D(a,b,c,d,n,func):
-    '''a - x lower bound \n
-    b - x upper bound \n
-    c - y lower bound \n
-    d - y upper bound \n
-    n - order of fit \n
-    func - the function to approximate \n
-    returns \n
+    '''a - x lower bound 
+    b - x upper bound 
+    c - y lower bound 
+    d - y upper bound 
+    n - order of fit 
+    func - the function to approximate 
+    returns 
     c - an nxn array of chebychev coefficients'''
     f = np.zeros([n,n])
     xk=0
@@ -125,15 +132,15 @@ def coeff2D(a,b,c,d,n,func):
     return cij
 
 def fit2D(a,b,c,d,n,cij,x,y):
-    '''a - x lower bound \n
-    b - x upper bound \n
-    c - y lower bound \n
-    d - y upper bound \n
-    n - order of approximation \n
-    cij - the chebychev coefficients \n
-    x - the x value of the estimate \n
-    y - the y value of the estimate\n
-    returns \n
+    '''a - x lower bound 
+    b - x upper bound 
+    c - y lower bound
+    d - y upper bound 
+    n - order of approximation 
+    cij - the chebychev coefficients 
+    x - the x value of the estimate 
+    y - the y value of the estimate
+    returns 
     val - value of the fit at (x,y)'''
     if x<a or x>b:
         raise Exception('x is outside the range of routine cheby2ft')
@@ -146,13 +153,13 @@ def fit2D(a,b,c,d,n,cij,x,y):
     return val
 
 def coeffPartialX(a,b,c,d,n,cij):
-    '''a - x lower bound \n
-    b - x upper bound \n
-    c - y lower bound \n
-    d - y upper bound \n
-    n - order of approximation \n
-    cij - the chebychev coefficients \n
-    returns\n
+    '''a - x lower bound 
+    b - x upper bound 
+    c - y lower bound 
+    d - y upper bound 
+    n - order of approximation 
+    cij - the chebychev coefficients 
+    returns
     dx_cij - the chebychev coefficients derivative wrt x
     '''
     dxcij = np.zeros(np.shape(cij))
@@ -161,13 +168,13 @@ def coeffPartialX(a,b,c,d,n,cij):
     return dxcij
 
 def coeffPartialY(a,b,c,d,n,cij):
-    '''a - x lower bound \n
-    b - x upper bound \n
-    c - y lower bound \n
-    d - y upper bound \n
-    n - order of approximation \n
-    cij - the chebychev coefficients \n
-    returns\n
+    '''a - x lower bound 
+    b - x upper bound 
+    c - y lower bound 
+    d - y upper bound 
+    n - order of approximation 
+    cij - the chebychev coefficients 
+    returns
     dy_cij - the chebychev coefficients derivative wrt y
     '''
     dycij = np.zeros(np.shape(cij))
@@ -176,13 +183,13 @@ def coeffPartialY(a,b,c,d,n,cij):
     return dycij
 
 def coeffPartialXY(a,b,c,d,n,cij):
-    '''a - x lower bound \n
-    b - x upper bound \n
-    c - y lower bound \n
-    d - y upper bound \n
-    n - order of approximation \n
-    func - the function which to approximate \n
-    returns\n
+    '''a - x lower bound 
+    b - x upper bound 
+    c - y lower bound 
+    d - y upper bound 
+    n - order of approximation
+    func - the function which to approximate 
+    returns
     dxdy_cij - the chebychev coefficients derivative wrt x and y
     '''
     dycij = np.zeros(np.shape(cij))
